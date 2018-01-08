@@ -1,27 +1,33 @@
 import React, { Component } from 'react';
-import './App.css';
+import { connect } from 'react-redux';
 
 import xhr from 'xhr';
-import Plot from '../Plot/Plot'
+import Plot from '../Plot/Plot';
+import { changeLocation } from '../../actions';
+
+
+function mapStateToProp(state){
+  return {
+    location: state.location
+  }
+}
 
 class App extends Component {
   state = {
-    location: '',
     data: {},
     dates: [],
     temps: [],
     selected: {
-    	date: '',
-    	temp: null
+      date: '',
+      temp: null
     }
   }
-
+  
   fetchData = (event) => {
 
     event.preventDefault();
-    console.log(this.state)
   
-    var location = encodeURIComponent(this.state.location);
+    var location = encodeURIComponent(this.props.location);
 
     var urlPrefix = "http://api.openweathermap.org/data/2.5/forecast?q=";
     var urlSuffix = "&APPID=c1f62f052159942bc0c53780caf947bd&units=metric";
@@ -53,18 +59,13 @@ class App extends Component {
 		})
 
     })
-    console.log(this.state)
   }
 
   changeLocation = (event) => {
-    console.log('changeLocation')
-    this.setState({
-      location: event.target.value
-    })
+    this.props.dispatch(changeLocation(event.target.value))
   }
 
   onPlotClick = (data) => {
-  	console.log(data)
   	if (data.points){
   		this.setState({
   			selected: {
@@ -106,8 +107,8 @@ class App extends Component {
 		        </p>
 		        <h2>Forecast</h2>
 		        <Plot
-		        	xData={this.state.dates}
-		        	yData={this.state.temps}
+		        	xData={this.props.dates}
+		        	yData={this.props.temps}
 		        	onPlotClick={this.onPlotClick}
 		        	type="scatter"
 		        />
@@ -118,4 +119,4 @@ class App extends Component {
   }
 }
 
-export default App;
+export default connect(mapStateToProp, null)(App);
