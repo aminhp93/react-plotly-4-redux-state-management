@@ -1,27 +1,20 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
-import xhr from 'xhr';
 import Plot from '../Plot/Plot';
-import { changeLocation } from '../../actions';
+import { 
+  changeLocation,
+  setSelectedTemp,
+  setSelectedDate,
+  fetchData
+} from '../../actions';
 
 
 function mapStateToProp(state){
-  return {
-    location: state.location
-  }
+  return state
 }
 
 class App extends Component {
-  state = {
-    data: {},
-    dates: [],
-    temps: [],
-    selected: {
-      date: '',
-      temp: null
-    }
-  }
   
   fetchData = (event) => {
 
@@ -33,32 +26,7 @@ class App extends Component {
     var urlSuffix = "&APPID=c1f62f052159942bc0c53780caf947bd&units=metric";
     var url = urlPrefix + location + urlSuffix;
     
-    var self = this;
-    xhr({
-      url: url
-    }, function(err, data){
-
-    	var body = JSON.parse(data.body);
-    	var list = body.list;
-    	var dates = [];
-    	var temps = [];
-    	for (var i = 0; i < list.length; i++){
-    		dates.push(list[i].dt_txt);
-    		temps.push(list[i].main.temp);
-    	}
-
-		// save data here
-		self.setState({
-			data: body,
-			dates: dates,
-			temps: temps,
-			selected: {
-		    	date: '',
-		    	temp: null
-		    }
-		})
-
-    })
+    this.props.dispatch(fetchData(url));
   }
 
   changeLocation = (event) => {
@@ -67,20 +35,17 @@ class App extends Component {
 
   onPlotClick = (data) => {
   	if (data.points){
-  		this.setState({
-  			selected: {
-  				date: data.points[0].x,
-  				temp: data.points[0].y	
-  			}  			
-  		})
+  		var number = data.points[0].pointNumber;
+      this.props.dispatch(setSelectedDate(this.props.dates[number]));
+      this.props.dispatch(setSelectedTemp(this.props.dates[number]));
   	}
   }
 
   render() {
     var currentTemp = 'not loaded yet';
     
-    if (this.state.data.list){
-      currentTemp = this.state.data.list[0].main.temp;
+    if (this.props.data.list){
+      currentTemp = this.props.data.list[0].main.temp;
     }
 	
     return (
@@ -91,19 +56,19 @@ class App extends Component {
             <input 
               type="text" 
               placeholder={"City, Country"}
-              value={this.state.location}
+              value={this.props.location}
               onChange={this.changeLocation}
             />
           </label>
         </form>
 
-        { (this.state.data.list) ? (
+        { (this.props.data.list) ? (
 			<div>
 				{/* Render the current temperatura if no specific date is picked */}
 				<p>
-		          <span>{ this.state.selected.temp ? this.state.selected.temp : currentTemp }</span>
+		          <span>{ this.props.selected.temp ? this.props.selected.temp : currentTemp }</span>
 		          <span> °C</span>
-		          <span> | { this.state.selected.temp ? this.state.selected.date: '' }</span>
+		          <span> | { this.props.selected.temp ? this.props.selected.date: '' }</span>
 		        </p>
 		        <h2>Forecast</h2>
 		        <Plot
